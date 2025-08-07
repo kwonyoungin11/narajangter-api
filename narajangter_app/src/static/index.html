@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나라장터 분석 시스템</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">나라장터 분석 시스템</h1>
+                <nav class="nav">
+                    <a href="#dashboard" class="nav-link active" data-tab="dashboard">대시보드</a>
+                    <a href="#bid-notices" class="nav-link" data-tab="bid-notices">입찰공고</a>
+                    <a href="#successful-bids" class="nav-link" data-tab="successful-bids">낙찰정보</a>
+                    <a href="#analytics" class="nav-link" data-tab="analytics">분석</a>
+                    <a href="#admin" class="nav-link" data-tab="admin">관리자</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main">
+        <div class="container">
+            <!-- 대시보드 탭 -->
+            <div id="dashboard" class="tab-content active">
+                <div class="dashboard-header">
+                    <h2>대시보드</h2>
+                    <p>나라장터 입찰/낙찰 정보를 한눈에 확인하세요</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-content">
+                            <h3 id="total-bid-notices">-</h3>
+                            <p>총 입찰공고</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-content">
+                            <h3 id="total-successful-bids">-</h3>
+                            <p>총 낙찰건수</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <h3 id="total-amount">-</h3>
+                            <p>총 입찰금액</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <h3 id="avg-success-rate">-</h3>
+                            <p>평균 낙찰률</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-card">
+                        <h3>월별 입찰공고 현황</h3>
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>업무구분별 분포</h3>
+                        <canvas id="workDivChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 입찰공고 탭 -->
+            <div id="bid-notices" class="tab-content">
+                <div class="section-header">
+                    <h2>입찰공고 검색</h2>
+                    <button class="btn btn-primary" onclick="syncBidNotices()">데이터 동기화</button>
+                </div>
+
+                <div class="search-panel">
+                    <div class="search-row">
+                        <input type="text" id="bid-search-keyword" placeholder="공고명 검색" class="search-input">
+                        <input type="text" id="bid-dminstt-search" placeholder="발주처 검색" class="search-input">
+                        <select id="bid-work-div" class="search-select">
+                            <option value="">업무구분 전체</option>
+                            <option value="물품">물품</option>
+                            <option value="용역">용역</option>
+                            <option value="공사">공사</option>
+                            <option value="외자">외자</option>
+                        </select>
+                    </div>
+                    <div class="search-row">
+                        <input type="date" id="bid-start-date" class="search-input">
+                        <input type="date" id="bid-end-date" class="search-input">
+                        <button class="btn btn-secondary" onclick="searchBidNotices()">검색</button>
+                        <button class="btn btn-outline" onclick="resetBidSearch()">초기화</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="bid-notices-table">
+                        <thead>
+                            <tr>
+                                <th>입찰공고번호</th>
+                                <th>공고명</th>
+                                <th>발주처</th>
+                                <th>추정가격</th>
+                                <th>입찰마감일</th>
+                                <th>업무구분</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bid-notices-tbody">
+                            <!-- 데이터가 여기에 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="bid-pagination">
+                    <!-- 페이지네이션이 여기에 로드됩니다 -->
+                </div>
+            </div>
+
+            <!-- 낙찰정보 탭 -->
+            <div id="successful-bids" class="tab-content">
+                <div class="section-header">
+                    <h2>낙찰정보 검색</h2>
+                </div>
+
+                <div class="search-panel">
+                    <div class="search-row">
+                        <input type="text" id="success-search-keyword" placeholder="낙찰업체명 검색" class="search-input">
+                        <select id="success-work-div" class="search-select">
+                            <option value="">업무구분 전체</option>
+                            <option value="물품">물품</option>
+                            <option value="용역">용역</option>
+                            <option value="공사">공사</option>
+                            <option value="외자">외자</option>
+                        </select>
+                    </div>
+                    <div class="search-row">
+                        <input type="date" id="success-start-date" class="search-input">
+                        <input type="date" id="success-end-date" class="search-input">
+                        <button class="btn btn-secondary" onclick="searchSuccessfulBids()">검색</button>
+                        <button class="btn btn-outline" onclick="resetSuccessSearch()">초기화</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="successful-bids-table">
+                        <thead>
+                            <tr>
+                                <th>입찰공고번호</th>
+                                <th>낙찰업체명</th>
+                                <th>낙찰금액</th>
+                                <th>추정가격</th>
+                                <th>낙찰률</th>
+                                <th>개찰일시</th>
+                                <th>업무구분</th>
+                            </tr>
+                        </thead>
+                        <tbody id="successful-bids-tbody">
+                            <!-- 데이터가 여기에 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="success-pagination">
+                    <!-- 페이지네이션이 여기에 로드됩니다 -->
+                </div>
+            </div>
+
+            <!-- 분석 탭 -->
+            <div id="analytics" class="tab-content">
+                <div class="section-header">
+                    <h2>데이터 분석</h2>
+                    <p>입찰/낙찰 데이터의 다양한 분석 결과를 확인하세요</p>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="chart-card large">
+                        <h3>업무구분별 입찰금액 분석</h3>
+                        <canvas id="bidAmountAnalysisChart"></canvas>
+                    </div>
+                    <div class="chart-card large">
+                        <h3>업무구분별 낙찰률 분석</h3>
+                        <canvas id="successRateAnalysisChart"></canvas>
+                    </div>
+                    <div class="chart-card large">
+                        <h3>월별 입찰 트렌드</h3>
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                    <div class="chart-card large">
+                        <h3>낙찰률 분포</h3>
+                        <canvas id="rateDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 관리자 탭 -->
+            <div id="admin" class="tab-content">
+                <div class="section-header">
+                    <h2>관리자 설정</h2>
+                    <p>나라장터 API 연동을 위한 설정을 관리합니다</p>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="config-card">
+                        <h3>API 설정</h3>
+                        <div class="form-group">
+                            <label for="service-key">공공데이터포털 서비스키</label>
+                            <input type="password" id="service-key" placeholder="서비스키를 입력하세요" class="form-input">
+                            <small class="form-help">공공데이터포털(data.go.kr)에서 발급받은 서비스키를 입력하세요</small>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="saveApiConfig()">설정 저장</button>
+                            <button class="btn btn-outline" onclick="loadApiConfig()">설정 조회</button>
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <h3>데이터 동기화</h3>
+                        <div class="form-group">
+                            <label for="sync-start-date">시작일</label>
+                            <input type="date" id="sync-start-date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="sync-end-date">종료일</label>
+                            <input type="date" id="sync-end-date" class="form-input">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="syncBidNoticesWithDate()">입찰공고 동기화</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 로딩 오버레이 -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>데이터를 불러오는 중...</p>
+    </div>
+
+    <!-- 알림 토스트 -->
+    <div id="toast" class="toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

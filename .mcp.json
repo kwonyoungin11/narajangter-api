@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "narajangter": {
+      "command": "python3",
+      "args": ["./mcp_server.py"],
+      "env": {
+        "API_KEY": "${NARAJANGTER_API_KEY}"
+      }
+    }
+  }
+}
